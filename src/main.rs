@@ -1,5 +1,5 @@
 #[macro_use] extern crate rocket;
-use rocket::{State, http::{Status, ContentType}};
+use rocket::{State, Request, http::{Status, ContentType}};
 use std::{io::Cursor, path::PathBuf};
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -147,6 +147,16 @@ fn placesloth(requested_width: u32, height_or_height_and_ext: PathBuf, image_res
     }
 }
 
+#[catch(400)]
+fn bad_request(req: &Request) -> String {
+    format!("400 Bad Request\n\n{} is not a valid request path. Please make sure neither width nor height exceed 2000px and that if you specify an extension it's one of: jpg, png, ico, gif, bmp", req.uri())
+}
+
+#[catch(500)]
+fn internal_server_error(_: &Request) -> &'static str {
+    "500 Internal Server Error\n\nWorking is effort, we don't like that here" 
+}
+
 /// Generate a favicon icon via the standard placesloth handler
 #[get("/favicon.ico")]
 fn favicon(image_response_cache: &State<ImageResponseCache>, image_cache: &State<ImageCache>) -> Result<ImageResponse, Status> {
@@ -168,4 +178,5 @@ fn rocket() -> _ {
         .manage(image_response_cache)
         .manage(image_cache)
         .mount("/", routes![index, placesloth, favicon])
+        .register("/", catchers![bad_request, internal_server_error])
 }
