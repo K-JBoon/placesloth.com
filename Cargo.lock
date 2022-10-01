@@ -683,6 +683,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "include_images_proc_macro"
+version = "0.1.0"
+
+[[package]]
 name = "indexmap"
 version = "1.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1023,6 +1027,7 @@ name = "placesloth"
 version = "0.1.0"
 dependencies = [
  "image",
+ "include_images_proc_macro",
  "rand",
  "rocket",
 ]

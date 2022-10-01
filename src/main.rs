@@ -6,6 +6,8 @@ use std::collections::HashMap;
 use rand::seq::SliceRandom;
 use rand::distributions::{Distribution, Uniform};
 use image::{ImageFormat, DynamicImage, imageops::FilterType};
+use include_images_proc_macro::*;
+
 
 type ImageResponse = (ContentType, Vec<u8>);
 
@@ -15,23 +17,7 @@ type ImageResponseCache = Mutex<HashMap<String, ImageResponse>>;
 
 // Dealing with the file system is effort, avoid effort and include everything in the binary
 const INDEX_HTML: &str = include_str!("./../resources/index.html");
-const SLOTH_IMAGES: &[&[u8]] = &[
-    include_bytes!("./../resources/processed/28fbf613d6f43d394a2a0bf2d0245ccf4bef7b41f1f1b0564ce8d948074ca029.jpg"),
-    include_bytes!("./../resources/processed/7b0fd5dac78f3122cec2862bc80f3813c4414635dc08e25ee499ee860e714903.jpg"),
-    include_bytes!("./../resources/processed/656d74713e2d3390ec4bfdb04874cd702eda5e36f9b2d08c7fd946978eb9c3f2.jpg"),
-    include_bytes!("./../resources/processed/5244d2016fb13948652fd55d17e271132ca01134ebbcfc61759d7b78d5036608.jpg"),
-    include_bytes!("./../resources/processed/45088f54f03d097ba7d1ec457fe0cbe29a3b3cb80f0c79cbf07aa93f292c2229.jpg"),
-    include_bytes!("./../resources/processed/3ce4a5fe3c03b9268a069d459b3640d5426afb5495c702aa1dcf1e5be5fd037f.jpg"),
-    include_bytes!("./../resources/processed/a0c2cd4dd07cd5b6bddd500e37314a4e5aa01e24b7161df6d98be19610a0032d.jpg"),
-    include_bytes!("./../resources/processed/b014553a67cba9b42478a554171bcf55aed2ec6c4ff32fb84130b855b9c4033a.jpg"),
-    include_bytes!("./../resources/processed/bc344d285720e842a8a6cbacf30eef2531fe295da18aa0262b0bcff1bbcd88f2.jpg"),
-    include_bytes!("./../resources/processed/d06c7b7fec975c45a3ddda54d609e922a432a28e3b60e340d66c87c045d13a5c.jpg"),
-    include_bytes!("./../resources/processed/d36077aba81011f7c6478c01599e28d04c9689e34c96960121318deed99ebef8.jpg"),
-    include_bytes!("./../resources/processed/d49780b5b0705c61d05a37c5ea09841f1650884d93e089307925a830c6be6eb2.jpg"),
-    include_bytes!("./../resources/processed/d7ccab20e3977df6b4359c0ac1b90fbe5131a1b853ddaf38a10a5e25dfbcad94.jpg"),
-    include_bytes!("./../resources/processed/e22b504dd40f55e71762ad99f7a366b214b943bca5f80aceaa8ca002d5a933fe.jpg"),
-    include_bytes!("./../resources/processed/ea80394a0a3dbad29a884bebad3a8cdd0cde6faeb5b99a787336b13a6ddfde1b.jpg"),
-];
+make_sloth_images_array!();
 
 /// Pick a random byte array from SLOTH_IMAGES and convert to a DynamicImage
 #[allow(clippy::map_entry)]
