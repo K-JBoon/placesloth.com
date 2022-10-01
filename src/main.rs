@@ -101,33 +101,24 @@ fn placesloth(requested_width: u32, height_or_height_and_ext: PathBuf, image_res
         return Err(Status::BadRequest);
     }
 
-    let output_format = match extension {
-        "png" => ImageFormat::Png,
-        "gif" => ImageFormat::Gif,
-        "ico" => ImageFormat::Ico,
-        "bmp" => ImageFormat::Bmp,
-        "jpg" => ImageFormat::Jpeg,
-        "jpeg" => ImageFormat::Jpeg,
+    let (output_format, content_type) = match extension {
+        "png" => (ImageFormat::Png, ContentType::PNG),
+        "gif" => (ImageFormat::Gif, ContentType::GIF),
+        "ico" => (ImageFormat::Ico, ContentType::Icon),
+        "bmp" => (ImageFormat::Bmp, ContentType::BMP),
+        "jpg" => (ImageFormat::Jpeg, ContentType::JPEG),
+        "jpeg" => (ImageFormat::Jpeg, ContentType::JPEG),
         _ => {
             return Err(Status::BadRequest)
         } 
     };
 
-    let content_type = match output_format {
-        ImageFormat::Png => ContentType::PNG,
-        ImageFormat::Gif => ContentType::GIF,
-        ImageFormat::Ico => ContentType::Icon,
-        ImageFormat::Bmp => ContentType::BMP,
-        ImageFormat::Jpeg => ContentType::JPEG,
-        _ => ContentType::JPEG
-    };
-
     // Check if we have a stored image for this resolution + extension combination
     // so we don't have to do effort
-    let key = format!("{}x{}.{}", requested_width, requested_height, extension);
+    let cache_key = format!("{}x{}.{}", requested_width, requested_height, extension);
 
-    if image_response_cache.lock().unwrap().contains_key(&key) {
-        Ok(image_response_cache.lock().unwrap().get(&key).unwrap().clone())
+    if image_response_cache.lock().unwrap().contains_key(&cache_key) {
+        Ok(image_response_cache.lock().unwrap().get(&cache_key).unwrap().clone())
     } else {
         // Pick a random image from the set, resize it to be as large as needed to create a cropout
         // and then crop to the desired size
@@ -141,7 +132,7 @@ fn placesloth(requested_width: u32, height_or_height_and_ext: PathBuf, image_res
         cropped_image.write_to(&mut stream, output_format).expect("Failed to write resized JPEG to buffer");
 
         let res = (content_type, buffer);
-        image_response_cache.lock().unwrap().insert(key, res.clone());
+        image_response_cache.lock().unwrap().insert(cache_key, res.clone());
 
         Ok(res)
     }
