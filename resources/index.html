@@ -71,6 +71,7 @@
         grid-area: 1 / 1 / 4 / 8;
       }
 
+      /* Default background-images provide easily cacheable variants without requiring JS */
       .right-block-top-image {
         grid-area: 1 / 8 / 3 / 10;
         background-image: url('./300/300');
@@ -118,10 +119,10 @@
             Supported extensions: png, jpg, gif, ico, bmp
           </blockquote>
         </div>
-        <div class="right-block-top-image"></div>
-        <div class="right-block-bottom-image"></div>
-        <div class="bottom-block-left-image"></div>
-        <div class="bottom-block-right-image"></div>
+        <div class="image-block right-block-top-image"></div>
+        <div class="image-block right-block-bottom-image"></div>
+        <div class="image-block bottom-block-left-image"></div>
+        <div class="image-block bottom-block-right-image"></div>
         <div class="footer-text">
           <span>Provided by <a href="https://github.com/K-JBoon/" target="blank">Klaas-Jan Boon</a></span>
           <span>
@@ -134,5 +135,13 @@
         </div>
       </div>
     </div>
+    <script>
+      const imageBlocks = [...document.querySelectorAll('.image-block')];
+      for (const imageBlock of imageBlocks) {
+	      const height = Math.ceil(imageBlock.offsetHeight / 50) * 50;
+	      const width = Math.ceil(imageBlock.offsetWidth / 50) * 50;
+	      imageBlock.style.backgroundImage = `url('./${width}/${height}')`;
+      }
+    </script>
   </body>
 </html>
