@@ -67,38 +67,12 @@
         font-size: 1rem;
       }
 
-      .main-area {
-        grid-area: 1 / 1 / 4 / 8;
-      }
-
-      /* Default background-images provide easily cacheable variants without requiring JS */
-      .right-block-top-image {
-        grid-area: 1 / 8 / 3 / 10;
-        background-image: url('./300/300');
-        background-size: cover;
-      }
-
-      .right-block-bottom-image {
-        grid-area: 3 / 8 / 6 / 10;
-        background-image: url('./300/450');
-        background-size: cover;
-      }
-
-      .bottom-block-left-image {
-        grid-area: 4 / 1 / 6 / 4;
-        background-image: url('./250/130');
-        background-size: cover;
-      }
-
-      .bottom-block-right-image {
-        grid-area: 4 / 4 / 6 / 8;
-        background-image: url('./300/130');
-        background-size: cover;
-      }
-
-      .footer-text {
-        grid-area: 6 / 1 / 7 / 10;
-      }
+      .main-area { grid-area: 1 / 1 / 4 / 8; }
+      .right-block-top-image { grid-area: 1 / 8 / 3 / 10; }
+      .right-block-bottom-image { grid-area: 3 / 8 / 6 / 10; }
+      .bottom-block-left-image { grid-area: 4 / 1 / 6 / 4; }
+      .bottom-block-right-image { grid-area: 4 / 4 / 6 / 8; }
+      .footer-text { grid-area: 6 / 1 / 7 / 10; }
 
       .footer-text > span:nth-child(2){
         float: right;
@@ -143,5 +117,27 @@
 	      imageBlock.style.backgroundImage = `url('./${width}/${height}')`;
       }
     </script>
+    <noscript>
+      <style>
+        .right-block-top-image {
+          background-size: cover;
+        }
+
+        .right-block-bottom-image {
+          background-image: url('./300/450');
+          background-size: cover;
+        }
+
+        .bottom-block-left-image {
+          background-image: url('./250/130');
+          background-size: cover;
+        }
+
+        .bottom-block-right-image {
+          background-image: url('./300/130');
+          background-size: cover;
+        }
+      </style>
+    </noscript>
   </body>
 </html>
