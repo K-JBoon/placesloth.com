@@ -8,32 +8,85 @@ use rand::distributions::{Distribution, Uniform};
 use image::{ImageFormat, DynamicImage, imageops::FilterType};
 use include_images_proc_macro::*;
 
-
 type ImageResponse = (ContentType, Vec<u8>);
 
 // As the caches are shared between worked threads we need to mutex them to guarantee thread safety
-type ImageCache = Mutex<HashMap<usize, DynamicImage>>;
+type ImageCache = Mutex<HashMap<String, DynamicImage>>;
 type ImageResponseCache = Mutex<HashMap<String, ImageResponse>>;
+
+// Images are presorted by which of these aspect ratios they are closest to
+enum AspectRatio {
+    Ratio1By1,
+    Ratio4By3,
+    Ratio3By4
+}
 
 // Dealing with the file system is effort, avoid effort and include everything in the binary
 const INDEX_HTML: &str = include_str!("./../resources/index.html");
 make_sloth_images_array!();
 
+fn pick_closest_aspect_ratio(width: u32, height: u32) -> AspectRatio {
+    let ratio: f32 = width as f32 / height as f32;
+
+    // Implement ordered floats for this at some point to solve with min_by_key
+    if ratio > 1.3333333 {
+        AspectRatio::Ratio4By3
+    } else if ratio <= 0.75 {
+        AspectRatio::Ratio3By4
+    } else if ratio == 1.0 {
+        AspectRatio::Ratio1By1
+    } else if ratio > 0.75 && ratio < 1.0 {
+        if (ratio - 0.75).abs() < (ratio - 1.0).abs() {
+            AspectRatio::Ratio3By4
+        } else {
+            AspectRatio::Ratio1By1
+        }
+    } else if ratio > 1.0 && ratio < 1.3333333 {
+        if (ratio - 1.3333333).abs() < (ratio - 1.0).abs() {
+            AspectRatio::Ratio4By3
+        } else {
+            AspectRatio::Ratio1By1
+        }
+    } else {
+        AspectRatio::Ratio1By1
+    }
+}
+
+fn pick_sloth_image_array(width: u32, height: u32) -> (AspectRatio, &'static [&'static [u8]]) {
+    let closest_aspect_ratio = pick_closest_aspect_ratio(width, height);
+
+    match closest_aspect_ratio {
+        AspectRatio::Ratio1By1 => (AspectRatio::Ratio1By1, SLOTH_IMAGES_1_BY_1),
+        AspectRatio::Ratio3By4 => (AspectRatio::Ratio3By4, SLOTH_IMAGES_3_BY_4),
+        AspectRatio::Ratio4By3 => (AspectRatio::Ratio4By3, SLOTH_IMAGES_4_BY_3)
+    }
+}
+
 /// Pick a random byte array from SLOTH_IMAGES and convert to a DynamicImage
 #[allow(clippy::map_entry)]
-fn pick_random_sloth_image(image_cache: &State<ImageCache>) -> DynamicImage {
+fn pick_random_sloth_image(width: u32, height: u32, image_cache: &State<ImageCache>) -> DynamicImage {
     let mut rng = rand::thread_rng();
 
-    let range = Uniform::from(0..SLOTH_IMAGES.len());
+    let (aspect_ratio, sloth_image_array) = pick_sloth_image_array(width, height);
+
+    let ratio_str = match aspect_ratio {
+        AspectRatio::Ratio1By1 => "1by1",
+        AspectRatio::Ratio3By4 => "3by4",
+        AspectRatio::Ratio4By3 => "4by3"
+    };
+
+    let range = Uniform::from(0..sloth_image_array.len());
     let index = range.sample(&mut rng);
+
+    let cache_key = format!("{}-{}", ratio_str, index);
 
     // Decoding is effort, effort is not very slothlike
     // Avoid effort 
-    if image_cache.lock().unwrap().contains_key(&index) {
-        image_cache.lock().unwrap().get(&index).unwrap().clone()
+    if image_cache.lock().unwrap().contains_key(&cache_key) {
+        image_cache.lock().unwrap().get(&cache_key).unwrap().clone()
     } else {
-        let image = image::load_from_memory_with_format(SLOTH_IMAGES.choose(&mut rng).unwrap(), ImageFormat::Jpeg).expect("Failed to create JPEG image from bytes");
-        image_cache.lock().unwrap().insert(index, image.clone());
+        let image = image::load_from_memory_with_format(sloth_image_array.choose(&mut rng).unwrap(), ImageFormat::Jpeg).expect("Failed to create JPEG image from bytes");
+        image_cache.lock().unwrap().insert(cache_key, image.clone());
         image
     }
 
@@ -108,7 +161,7 @@ fn placesloth(requested_width: u32, height_or_height_and_ext: PathBuf, image_res
     } else {
         // Pick a random image from the set, resize it to be as large as needed to create a cropout
         // and then crop to the desired size
-        let image = pick_random_sloth_image(image_cache); 
+        let image = pick_random_sloth_image(requested_width, requested_height, image_cache);
         let resized_image = resize_image(image, requested_width, requested_height); 
         let cropped_image = crop_image(resized_image, requested_width, requested_height);
 
@@ -149,7 +202,7 @@ fn index() -> (ContentType, &'static str) {
 fn rocket() -> _ {
     println!("Happy slothing!");
     let image_response_cache: ImageResponseCache = Mutex::new(HashMap::<String, ImageResponse>::new()); 
-    let image_cache: ImageCache = Mutex::new(HashMap::<usize, DynamicImage>::new());
+    let image_cache: ImageCache = Mutex::new(HashMap::<String, DynamicImage>::new());
 
     rocket::build()
         .manage(image_response_cache)
